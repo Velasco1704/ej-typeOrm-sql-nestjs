@@ -6,13 +6,13 @@ export class Post {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ default: 'No title' })
+  @Column({ default: () => 'No title' })
   title: string;
 
-  @Column({ default: 'No content' })
+  @Column({ default: () => 'No content' })
   content: string;
 
-  @Column()
+  @Column({ default: () => 0 })
   authorId: number;
 
   @ManyToOne(() => User, (user) => user.posts)
