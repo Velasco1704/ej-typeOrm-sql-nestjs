@@ -33,6 +33,11 @@ export class UsersController {
     return this.usersService.createUser(createUserDto);
   }
 
+  @Post('login')
+  loginUser(@Body() objectLogin: CreateUserDto) {
+    return this.usersService.login(objectLogin);
+  }
+
   @Delete(':id')
   deleteUser(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.deleteUser(id);

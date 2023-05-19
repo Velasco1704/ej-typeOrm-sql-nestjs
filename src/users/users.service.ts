@@ -6,12 +6,15 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { Profile } from './entities/profile.entity';
+import { compare, hash } from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Profile) private profileRepository: Repository<Profile>,
+    private jwtService: JwtService,
   ) {}
 
   getUsers() {
@@ -40,6 +43,8 @@ export class UsersService {
     });
     if (foundUser)
       throw new HttpException('USER_ALREADY_EXITS', HttpStatus.CONFLICT);
+    const plainToHash = await hash(user.password, 10);
+    user = { ...user, password: plainToHash };
     const newUser = this.userRepository.create(user);
     return this.userRepository.save(newUser);
   }
@@ -57,6 +62,28 @@ export class UsersService {
       throw new HttpException('USER_NOT_FOUND', HttpStatus.NOT_FOUND);
     const updateUser = Object.assign(foundUser, objectUser);
     return this.userRepository.save(updateUser);
+  }
+
+  async login(objectLogin: CreateUserDto) {
+    const foundUser = await this.userRepository.findOne({
+      where: {
+        username: objectLogin.username,
+      },
+    });
+    if (!foundUser)
+      throw new HttpException('USER_NOT_FOUND', HttpStatus.NOT_FOUND);
+    const checkPassword = await compare(
+      objectLogin.password,
+      foundUser.password,
+    );
+    if (!checkPassword)
+      throw new HttpException('PASSWORD__INCORRECT', HttpStatus.NOT_ACCEPTABLE);
+    const payload = { id: foundUser.id, name: foundUser.username };
+    const token = this.jwtService.sign(payload);
+    return {
+      user: foundUser,
+      token,
+    };
   }
 
   async createProfile(id: number, profile: CreateProfileDto) {
