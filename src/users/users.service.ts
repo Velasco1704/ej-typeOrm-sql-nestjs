@@ -57,7 +57,7 @@ export class UsersService {
   }
 
   async update(id: number, objectUser: UpdateUserDto) {
-    const foundUser = await this.userRepository.findOneBy({ id });
+    const foundUser = await this.userRepository.findOne({ where: { id } });
     if (!foundUser)
       throw new HttpException('USER_NOT_FOUND', HttpStatus.NOT_FOUND);
     const updateUser = Object.assign(foundUser, objectUser);
